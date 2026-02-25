@@ -686,6 +686,38 @@
             background: rgba(49,46,129,0.95);
         }
 
+
+        /* ── VOETNOOT VERSIE-INFO ───────────────────────────── */
+        .app-footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1rem;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .app-footer strong { color: rgba(255,255,255,0.9); }
+        .footer-divider { opacity: 0.4; }
+        #footerUpdateStatus {
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        #footerUpdateStatus.up-to-date {
+            background: rgba(16,185,129,0.25);
+            color: #6ee7b7;
+        }
+        #footerUpdateStatus.update-available {
+            background: rgba(251,191,36,0.25);
+            color: #fde68a;
+            animation: pulseGreen 2s ease-in-out infinite;
+        }
+
     </style>
 </head>
 <body>
@@ -857,12 +889,22 @@
             </div>
             <div id="ipCurrent" class="location-current"></div>
         </div>
+
+        <!-- Voetnoot versie-info -->
+        <div class="app-footer">
+            <span>⚡ Energie Monitor</span>
+            <span class="footer-divider">|</span>
+            <span>Lokale versie: <strong id="footerLocalVersion">—</strong></span>
+            <span class="footer-divider">|</span>
+            <span>GitHub versie: <strong id="footerRemoteVersion">—</strong></span>
+            <span id="footerUpdateStatus"></span>
+        </div>
     </div>
 
     <script>
         // ── VERSIE & AUTO-UPDATE CHECK ───────────────────────
         // Dit versienummer moet worden aangepast bij elke nieuwe upload naar GitHub
-        const APP_VERSION = '8.1';
+        const APP_VERSION = '8.0';
         const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Bartstard/Energiemeter/main/index.html';
         const GITHUB_API_URL = 'https://api.github.com/repos/Bartstard/Energiemeter/commits?path=index.html&per_page=1';
 
@@ -1771,6 +1813,11 @@
                 if (!versionMatch) return;
                 const remoteVersion = versionMatch[1];
 
+                // Update footer met remote versie
+                const remoteEl = document.getElementById('footerRemoteVersion');
+                if (remoteEl) remoteEl.textContent = `v${remoteVersion}`;
+
+                const statusEl = document.getElementById('footerUpdateStatus');
                 if (remoteVersion !== APP_VERSION) {
                     // Nieuwere versie beschikbaar — toon de knop
                     const btn = document.getElementById('updateBtn');
@@ -1779,16 +1826,30 @@
                     document.getElementById('updateBtnLabel').textContent =
                         `Nieuwe versie beschikbaar (v${remoteVersion})`;
                     btn.style.display = 'flex';
+                    if (statusEl) {
+                        statusEl.textContent = '⬆ Update beschikbaar';
+                        statusEl.className = 'update-available';
+                    }
                     console.log(`Update beschikbaar: ${APP_VERSION} → ${remoteVersion}`);
+                } else {
+                    if (statusEl) {
+                        statusEl.textContent = '✓ Up-to-date';
+                        statusEl.className = 'up-to-date';
+                    }
                 }
             } catch(e) {
                 console.warn('Update check mislukt:', e);
+                const statusEl = document.getElementById('footerUpdateStatus');
+                if (statusEl) { statusEl.textContent = '— Geen verbinding met GitHub'; statusEl.className = ''; }
             }
         }
 
         // Controleer bij opstarten en daarna elke 6 uur
         checkForUpdate();
         setInterval(checkForUpdate, 6 * 3600 * 1000);
+
+        // Toon lokale versie in voetnoot
+        document.getElementById('footerLocalVersion').textContent = `v${APP_VERSION}`;
 
         startTime();
         fetchEnergyData();
@@ -1799,4 +1860,3 @@
     </script>
 </body>
 </html>
-
