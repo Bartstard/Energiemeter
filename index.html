@@ -645,9 +645,55 @@
         }
         body.dark .location-current { color: #34d399; }
 
+
+        /* ── UPDATE KNOP ───────────────────────────────────── */
+        .update-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 0.65rem 1rem;
+            border-radius: 50px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #16a34a;
+            text-decoration: none;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            animation: pulseGreen 2s ease-in-out infinite;
+            white-space: nowrap;
+        }
+        .update-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            background: white;
+        }
+        @keyframes pulseGreen {
+            0%, 100% { box-shadow: 0 4px 16px rgba(22,163,74,0.2); }
+            50%       { box-shadow: 0 4px 24px rgba(22,163,74,0.5); }
+        }
+        body.dark .update-btn {
+            background: rgba(30,27,75,0.95);
+            color: #34d399;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+        }
+        body.dark .update-btn:hover {
+            background: rgba(49,46,129,0.95);
+        }
+
     </style>
 </head>
 <body>
+    <!-- Update knop linksboven (verborgen tot update beschikbaar) -->
+    <a id="updateBtn" class="update-btn" style="display:none;" target="_blank">
+        ⬇️ <span id="updateBtnLabel">Nieuwe versie beschikbaar</span>
+    </a>
+
     <!-- Vaste knoppen rechtsboven -->
     <div class="top-controls">
         <div class="top-toggle" onclick="toggleDarkMode()">
@@ -814,6 +860,12 @@
     </div>
 
     <script>
+        // ── VERSIE & AUTO-UPDATE CHECK ───────────────────────
+        // Dit versienummer moet worden aangepast bij elke nieuwe upload naar GitHub
+        const APP_VERSION = '8.1';
+        const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Bartstard/Energiemeter/main/index.html';
+        const GITHUB_API_URL = 'https://api.github.com/repos/Bartstard/Energiemeter/commits?path=index.html&per_page=1';
+
         let testMode = false;
         let testDataInterval;
 
@@ -1693,6 +1745,51 @@
 
         updateLocationLabel();
 
+
+        // ── UPDATE CHECK ─────────────────────────────────────
+        async function checkForUpdate() {
+            try {
+                // Haal de laatste commit op via GitHub API
+                const resp = await fetch(GITHUB_API_URL, {
+                    headers: { 'Accept': 'application/vnd.github.v3+json' },
+                    cache: 'no-cache'
+                });
+                if (!resp.ok) return;
+                const commits = await resp.json();
+                if (!commits.length) return;
+
+                const latestSha = commits[0].sha;
+                const latestDate = new Date(commits[0].commit.author.date);
+
+                // Haal de versie op uit het raw bestand op GitHub
+                const rawResp = await fetch(GITHUB_RAW_URL + '?t=' + Date.now(), { cache: 'no-cache' });
+                if (!rawResp.ok) return;
+                const rawText = await rawResp.text();
+
+                // Zoek het versienummer in het GitHub-bestand
+                const versionMatch = rawText.match(/const APP_VERSION = '([^']+)'/);
+                if (!versionMatch) return;
+                const remoteVersion = versionMatch[1];
+
+                if (remoteVersion !== APP_VERSION) {
+                    // Nieuwere versie beschikbaar — toon de knop
+                    const btn = document.getElementById('updateBtn');
+                    btn.href = GITHUB_RAW_URL;
+                    btn.download = 'index.html';
+                    document.getElementById('updateBtnLabel').textContent =
+                        `Nieuwe versie beschikbaar (v${remoteVersion})`;
+                    btn.style.display = 'flex';
+                    console.log(`Update beschikbaar: ${APP_VERSION} → ${remoteVersion}`);
+                }
+            } catch(e) {
+                console.warn('Update check mislukt:', e);
+            }
+        }
+
+        // Controleer bij opstarten en daarna elke 6 uur
+        checkForUpdate();
+        setInterval(checkForUpdate, 6 * 3600 * 1000);
+
         startTime();
         fetchEnergyData();
         setInterval(fetchEnergyData, 1000);
@@ -1702,3 +1799,4 @@
     </script>
 </body>
 </html>
+
