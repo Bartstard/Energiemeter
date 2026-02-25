@@ -904,7 +904,7 @@
     <script>
         // ── VERSIE & AUTO-UPDATE CHECK ───────────────────────
         // Dit versienummer moet worden aangepast bij elke nieuwe upload naar GitHub
-        const APP_VERSION = '8.0';
+        const APP_VERSION = '8.2';
         const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Bartstard/Energiemeter/main/index.html';
         const GITHUB_API_URL = 'https://api.github.com/repos/Bartstard/Energiemeter/commits?path=index.html&per_page=1';
 
@@ -1840,7 +1840,8 @@
             } catch(e) {
                 console.warn('Update check mislukt:', e);
                 const statusEl = document.getElementById('footerUpdateStatus');
-                if (statusEl) { statusEl.textContent = '— Geen verbinding met GitHub'; statusEl.className = ''; }
+                document.getElementById('footerRemoteVersion').textContent = 'niet bereikbaar';
+                if (statusEl) { statusEl.textContent = ''; statusEl.className = ''; }
             }
         }
 
@@ -1850,6 +1851,9 @@
 
         // Toon lokale versie in voetnoot
         document.getElementById('footerLocalVersion').textContent = `v${APP_VERSION}`;
+        document.getElementById('footerRemoteVersion').textContent = 'laden...';
+        const statusElInit = document.getElementById('footerUpdateStatus');
+        if (statusElInit) { statusElInit.textContent = ''; statusElInit.className = ''; }
 
         startTime();
         fetchEnergyData();
