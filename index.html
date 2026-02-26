@@ -722,9 +722,9 @@
 </head>
 <body>
     <!-- Update knop linksboven (verborgen tot update beschikbaar) -->
-    <a id="updateBtn" class="update-btn" style="display:none;" target="_blank">
+    <button id="updateBtn" class="update-btn" style="display:none;" onclick="downloadUpdate()">
         ⬇️ <span id="updateBtnLabel">Nieuwe versie beschikbaar</span>
-    </a>
+    </button>
 
     <!-- Vaste knoppen rechtsboven -->
     <div class="top-controls">
@@ -904,7 +904,7 @@
     <script>
         // ── VERSIE & AUTO-UPDATE CHECK ───────────────────────
         // Dit versienummer moet worden aangepast bij elke nieuwe upload naar GitHub
-        const APP_VERSION = '8.7';
+        const APP_VERSION = '8.8';
         const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Bartstard/Energiemeter/main/index.html';
         // Contents API: geeft altijd de actuele versie terug, nooit gecached
         const GITHUB_API_URL = 'https://api.github.com/repos/Bartstard/Energiemeter/contents/index.html';
@@ -1790,6 +1790,19 @@
 
 
         // ── UPDATE CHECK ─────────────────────────────────────
+        // Download update als lokaal bestand via Blob
+        function downloadUpdate() {
+            if (!window._updateContent) return;
+            const blob = new Blob([window._updateContent], { type: 'text/html' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = 'index.html';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+        }
+
         async function checkForUpdate() {
             const remoteEl  = document.getElementById('footerRemoteVersion');
             const statusEl  = document.getElementById('footerUpdateStatus');
@@ -1826,11 +1839,10 @@
                 if (remoteEl) remoteEl.textContent = `v${remoteVersion}`;
 
                 if (remoteVersion !== String(APP_VERSION)) {
-                    const btn = document.getElementById('updateBtn');
-                    btn.href = GITHUB_RAW_URL;
-                    btn.download = 'index.html';
+                    // Sla de gedownloade inhoud op zodat de knop die lokaal kan aanbieden
+                    window._updateContent = rawText;
                     document.getElementById('updateBtnLabel').textContent = `Nieuwe versie beschikbaar (v${remoteVersion})`;
-                    btn.style.display = 'flex';
+                    document.getElementById('updateBtn').style.display = 'flex';
                     if (statusEl) { statusEl.textContent = '⬆ Update beschikbaar'; statusEl.className = 'update-available'; }
                 } else {
                     if (statusEl) { statusEl.textContent = '✓ Up-to-date'; statusEl.className = 'up-to-date'; }
