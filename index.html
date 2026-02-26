@@ -904,9 +904,10 @@
     <script>
         // ── VERSIE & AUTO-UPDATE CHECK ───────────────────────
         // Dit versienummer moet worden aangepast bij elke nieuwe upload naar GitHub
-        const APP_VERSION = '8.3';
+        const APP_VERSION = '8.4';
         const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Bartstard/Energiemeter/main/index.html';
-        const GITHUB_API_URL = 'https://api.github.com/repos/Bartstard/Energiemeter/commits?path=index.html&per_page=1';
+        // Contents API: geeft altijd de actuele versie terug, nooit gecached
+        const GITHUB_API_URL = 'https://api.github.com/repos/Bartstard/Energiemeter/contents/index.html';
 
         let testMode = false;
         let testDataInterval;
@@ -1792,23 +1793,24 @@
         async function checkForUpdate() {
             try {
                 // Haal de laatste commit op via GitHub API
+                // Contents API geeft bestand als base64 terug — nooit gecached door GitHub CDN
                 const resp = await fetch(GITHUB_API_URL, {
-                    headers: { 'Accept': 'application/vnd.github.v3+json' },
-                    cache: 'no-cache'
+                    headers: {
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    },
+                    cache: 'no-store'
                 });
                 if (!resp.ok) return;
-                const commits = await resp.json();
-                if (!commits.length) return;
+                const meta = await resp.json();
 
-                const latestSha = commits[0].sha;
-                const latestDate = new Date(commits[0].commit.author.date);
+                // Decodeer base64 inhoud
+                const rawText = decodeURIComponent(
+                    atob(meta.content.replace(/\n/g, ''))
+                        .split('').map(c => '%' + c.charCodeAt(0).toString(16).padStart(2,'0')).join('')
+                );
 
-                // Haal de versie op uit het raw bestand op GitHub
-                const rawResp = await fetch(GITHUB_RAW_URL + '?t=' + Date.now(), { cache: 'no-cache' });
-                if (!rawResp.ok) return;
-                const rawText = await rawResp.text();
-
-                // Zoek het versienummer in het GitHub-bestand
                 // Zoek versienummer met of zonder aanhalingstekens
                 const versionMatch = rawText.match(/const APP_VERSION = ['"]?([\d.]+)['"]?/);
                 if (!versionMatch) return;
