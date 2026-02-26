@@ -904,7 +904,7 @@
     <script>
         // ── VERSIE & AUTO-UPDATE CHECK ───────────────────────
         // Dit versienummer moet worden aangepast bij elke nieuwe upload naar GitHub
-        const APP_VERSION = '8.5';
+        const APP_VERSION = '8.7';
         const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Bartstard/Energiemeter/main/index.html';
         // Contents API: geeft altijd de actuele versie terug, nooit gecached
         const GITHUB_API_URL = 'https://api.github.com/repos/Bartstard/Energiemeter/contents/index.html';
@@ -1791,56 +1791,54 @@
 
         // ── UPDATE CHECK ─────────────────────────────────────
         async function checkForUpdate() {
+            const remoteEl  = document.getElementById('footerRemoteVersion');
+            const statusEl  = document.getElementById('footerUpdateStatus');
+
+            function setError(msg) {
+                if (remoteEl) remoteEl.textContent = '—';
+                if (statusEl) { statusEl.textContent = msg; statusEl.className = ''; }
+            }
+
             try {
-                // Haal de laatste commit op via GitHub API
-                // Contents API geeft bestand als base64 terug — nooit gecached door GitHub CDN
-                const resp = await fetch(GITHUB_API_URL, {
-                    headers: {
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
-                    },
-                    cache: 'no-store'
-                });
-                if (!resp.ok) return;
-                const meta = await resp.json();
+                // Stap 1: haal de laatste commit SHA op
+                const commitsResp = await fetch(
+                    'https://api.github.com/repos/Bartstard/Energiemeter/commits?path=index.html&per_page=1',
+                    { headers: { 'Accept': 'application/vnd.github.v3+json' }, cache: 'no-store' }
+                );
+                if (!commitsResp.ok) { setError(`— GitHub API fout (${commitsResp.status})`); return; }
+                const commits = await commitsResp.json();
+                if (!commits.length) { setError('— Geen commits gevonden'); return; }
 
-                // Decodeer base64 inhoud (simpele methode, werkt voor ASCII versienummer)
-                const rawText = atob(meta.content.replace(/\s/g, ''));
+                // Stap 2: haal bestandsinhoud op via contents API (geeft base64 terug)
+                const contentsResp = await fetch(
+                    `https://api.github.com/repos/Bartstard/Energiemeter/contents/index.html?ref=${commits[0].sha}`,
+                    { headers: { 'Accept': 'application/vnd.github.v3+json' }, cache: 'no-store' }
+                );
+                if (!contentsResp.ok) { setError(`— Inhoud niet bereikbaar (${contentsResp.status})`); return; }
+                const contentsJson = await contentsResp.json();
+                const rawText = atob(contentsJson.content.replace(/\s/g, ''));
 
-                // Zoek versienummer met of zonder aanhalingstekens
-                const versionMatch = rawText.match(/const APP_VERSION = ['"]?([\d.]+)['"]?/);
-                if (!versionMatch) return;
-                const remoteVersion = versionMatch[1].trim();
+                // Zoek versienummer
+                const match = rawText.match(/APP_VERSION\s*=\s*['"]?([\d.]+)['"]?/);
+                if (!match) { setError('— Versie niet gevonden'); return; }
+                const remoteVersion = match[1];
 
-                // Update footer met remote versie
-                const remoteEl = document.getElementById('footerRemoteVersion');
                 if (remoteEl) remoteEl.textContent = `v${remoteVersion}`;
 
-                const statusEl = document.getElementById('footerUpdateStatus');
                 if (remoteVersion !== String(APP_VERSION)) {
-                    // Nieuwere versie beschikbaar — toon de knop
                     const btn = document.getElementById('updateBtn');
                     btn.href = GITHUB_RAW_URL;
                     btn.download = 'index.html';
-                    document.getElementById('updateBtnLabel').textContent =
-                        `Nieuwe versie beschikbaar (v${remoteVersion})`;
+                    document.getElementById('updateBtnLabel').textContent = `Nieuwe versie beschikbaar (v${remoteVersion})`;
                     btn.style.display = 'flex';
-                    if (statusEl) {
-                        statusEl.textContent = '⬆ Update beschikbaar';
-                        statusEl.className = 'update-available';
-                    }
-                    console.log(`Update beschikbaar: ${APP_VERSION} → ${remoteVersion}`);
+                    if (statusEl) { statusEl.textContent = '⬆ Update beschikbaar'; statusEl.className = 'update-available'; }
                 } else {
-                    if (statusEl) {
-                        statusEl.textContent = '✓ Up-to-date';
-                        statusEl.className = 'up-to-date';
-                    }
+                    if (statusEl) { statusEl.textContent = '✓ Up-to-date'; statusEl.className = 'up-to-date'; }
                 }
+
             } catch(e) {
-                console.warn('Update check mislukt:', e);
-                const statusEl = document.getElementById('footerUpdateStatus');
-                if (statusEl) { statusEl.textContent = '— Geen verbinding met GitHub'; statusEl.className = ''; }
+                console.warn('Update check fout:', e);
+                setError('— Geen verbinding met GitHub');
             }
         }
 
