@@ -718,23 +718,130 @@
             animation: pulseGreen 2s ease-in-out infinite;
         }
 
+
+        /* ── INSTELLINGEN PANEEL ────────────────────────────── */
+        .settings-panel {
+            display: none;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .settings-panel.open { display: block; }
+
+        .settings-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .settings-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+        .settings-section-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .settings-block {
+            margin-bottom: 1.25rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .settings-block:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .settings-block-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 0.6rem;
+        }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.55rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .settings-row:last-child { border-bottom: none; }
+        .settings-row-label {
+            font-size: 0.9rem;
+            color: #334155;
+            font-weight: 500;
+        }
+
+        /* Toggle switch in settings */
+        .settings-toggle {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+        .settings-toggle input[type="checkbox"] {
+            opacity: 0;
+            width: 0; height: 0;
+            position: absolute;
+        }
+        .settings-toggle-track {
+            position: absolute;
+            inset: 0;
+            background: #cbd5e1;
+            border-radius: 12px;
+            transition: background 0.3s;
+        }
+        .settings-toggle-track::before {
+            content: '';
+            position: absolute;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            background: white;
+            top: 2px; left: 2px;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .settings-toggle input:checked + .settings-toggle-track { background: #667eea; }
+        .settings-toggle input:checked + .settings-toggle-track::before { transform: translateX(20px); }
+
+        /* Dark mode: settings panel */
+        body.dark .settings-panel {
+            background: rgba(30,27,75,0.9);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        body.dark .settings-section { border-color: rgba(255,255,255,0.08); }
+        body.dark .settings-section-title { color: #a5b4fc; }
+        body.dark .settings-block { border-color: rgba(255,255,255,0.05); }
+        body.dark .settings-block-title { color: #94a3b8; }
+        body.dark .settings-row { border-color: rgba(255,255,255,0.05); }
+        body.dark .settings-row-label { color: #cbd5e1; }
+        body.dark .settings-toggle-track { background: #4c1d95; }
+        body.dark .settings-toggle input:checked + .settings-toggle-track { background: #818cf8; }
+
+        /* Footer contrast fix voor lichte modus */
+        .app-footer {
+            color: rgba(255,255,255,0.85) !important;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .app-footer strong { color: #ffffff !important; }
+        .footer-divider { opacity: 0.5; }
+
     </style>
 </head>
 <body>
     <!-- Update knop linksboven (verborgen tot update beschikbaar) -->
-    <button id="updateBtn" class="update-btn" style="display:none;" onclick="downloadUpdate()">
+    <a id="updateBtn" class="update-btn" style="display:none;" target="_blank">
         ⬇️ <span id="updateBtnLabel">Nieuwe versie beschikbaar</span>
-    </button>
+    </a>
 
     <!-- Vaste knoppen rechtsboven -->
     <div class="top-controls">
-        <div class="top-toggle" onclick="toggleDarkMode()">
-            <span class="top-toggle-label" id="darkModeLabel">🌙 Dark</span>
-            <input type="checkbox" id="darkModeCheckbox">
-        </div>
-        <div class="top-toggle" onclick="toggleTestMode()">
-            <span class="top-toggle-label">Test</span>
-            <input type="checkbox" id="testModeCheckbox">
+        <div class="top-toggle" onclick="toggleSettings()">
+            <span class="top-toggle-label">⚙️ Instellingen</span>
+            <input type="checkbox" id="settingsCheckbox">
         </div>
     </div>
     <div class="test-mode-badge" id="testModeBadge">🧪 Demo Data Actief</div>
@@ -745,7 +852,76 @@
             <div class="time" id="txt">--:--:--</div>
         </header>
 
-        <div class="dashboard">
+        <!-- ══ INSTELLINGEN PANEEL ══════════════════════════════ -->
+        <div id="settingsPanel" class="settings-panel">
+
+            <div class="settings-section">
+                <div class="settings-section-title">🔧 Instellingen</div>
+                <div class="settings-block">
+                    <div class="settings-block-title">🔌 IP-adres HomeWizard energiemeter</div>
+                    <div class="location-search-row">
+                        <input type="text" id="ipInput" placeholder="bv. 192.168.1.105" autocomplete="off" spellcheck="false">
+                        <button onclick="saveIpAddress()">Opslaan</button>
+                    </div>
+                    <div id="ipCurrent" class="location-current"></div>
+                </div>
+                <div class="settings-block">
+                    <div class="settings-block-title">📍 Locatie weersvoorspelling</div>
+                    <div class="location-search-row">
+                        <input type="text" id="locationInput" placeholder="Zoek een stad of gemeente..." autocomplete="off">
+                        <button onclick="searchLocation()">Zoeken</button>
+                    </div>
+                    <div id="locationResults" class="location-results"></div>
+                    <div id="locationCurrent" class="location-current"></div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-title">🖥️ Weergave</div>
+                <div class="settings-row">
+                    <span class="settings-row-label">🌙 Donkere modus</span>
+                    <div class="settings-toggle" onclick="toggleDarkMode()"><input type="checkbox" id="darkModeCheckbox"><span class="settings-toggle-track"></span></div>
+                </div>
+                <div class="settings-row">
+                    <span class="settings-row-label">📊 Berekende kwartierpiek / Kwartierpiek / Maandpiek</span>
+                    <div class="settings-toggle" onclick="toggleWidget('pieken')"><input type="checkbox" id="showPieken" checked><span class="settings-toggle-track"></span></div>
+                </div>
+                <div class="settings-row">
+                    <span class="settings-row-label">⚡ Actueel verbruik meter</span>
+                    <div class="settings-toggle" onclick="toggleWidget('gauge')"><input type="checkbox" id="showGauge" checked><span class="settings-toggle-track"></span></div>
+                </div>
+                <div class="settings-row">
+                    <span class="settings-row-label">🔌 Meterstanden (geïmporteerd / geïnjecteerd / netto)</span>
+                    <div class="settings-toggle" onclick="toggleWidget('meterstanden')"><input type="checkbox" id="showMeterstanden" checked><span class="settings-toggle-track"></span></div>
+                </div>
+                <div class="settings-row">
+                    <span class="settings-row-label">☀️ Zongrafiek</span>
+                    <div class="settings-toggle" onclick="toggleWidget('solar')"><input type="checkbox" id="showSolar" checked><span class="settings-toggle-track"></span></div>
+                </div>
+                <div class="settings-row">
+                    <span class="settings-row-label">🌤️ Weersvoorspelling</span>
+                    <div class="settings-toggle" onclick="toggleWidget('weer')"><input type="checkbox" id="showWeer" checked><span class="settings-toggle-track"></span></div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-section-title">🧪 Testmodus</div>
+                <div class="settings-row">
+                    <span class="settings-row-label">Testmodus activeren</span>
+                    <div class="settings-toggle" onclick="toggleTestMode()"><input type="checkbox" id="testModeCheckbox"><span class="settings-toggle-track"></span></div>
+                </div>
+                <div id="testControls" class="test-controls" style="margin-top:1rem;margin-bottom:0;border:none;padding:0.5rem 0 0 0;box-shadow:none;background:none;">
+                    <div class="test-controls-grid">
+                        <div class="test-control-item"><label>Maandpiek (W)</label><input type="number" id="testMaandpiek" value="4200" min="0" max="20000" step="100"></div>
+                        <div class="test-control-item"><label>Berekende Kwartierpiek (W)</label><input type="number" id="testBerekendePiek" value="3500" min="0" max="20000" step="100"></div>
+                        <div class="test-control-item"><label>Actueel Verbruik Min (W)</label><input type="number" id="testPowerMin" value="800" min="0" max="20000" step="100"></div>
+                        <div class="test-control-item"><label>Actueel Verbruik Max (W)</label><input type="number" id="testPowerMax" value="3500" min="0" max="20000" step="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard" id="piekenDashboard">
             <div class="card">
                 <div class="card-icon">⚡</div>
                 <div class="card-body">
@@ -780,35 +956,12 @@
             </div>
         </div>
 
-        <!-- Test Mode Controls Panel -->
-        <div id="testControls" class="test-controls">
-            <div class="test-controls-title">⚙️ Testmodus Instellingen</div>
-            <div class="test-controls-grid">
-                <div class="test-control-item">
-                    <label>Maandpiek (W)</label>
-                    <input type="number" id="testMaandpiek" value="4200" min="0" max="20000" step="100">
-                </div>
-                <div class="test-control-item">
-                    <label>Berekende Kwartierpiek (W)</label>
-                    <input type="number" id="testBerekendePiek" value="3500" min="0" max="20000" step="100">
-                </div>
-                <div class="test-control-item">
-                    <label>Actueel Verbruik Min (W)</label>
-                    <input type="number" id="testPowerMin" value="800" min="0" max="20000" step="100">
-                </div>
-                <div class="test-control-item">
-                    <label>Actueel Verbruik Max (W)</label>
-                    <input type="number" id="testPowerMax" value="3500" min="0" max="20000" step="100">
-                </div>
-            </div>
-        </div>
-
-        <div class="gauge-container">
+        <div class="gauge-container" id="gaugeDashboard">
             <div id='myDiv'></div>
         </div>
 
         <!-- Energie tellers -->
-        <div class="dashboard" style="margin-top:0;">
+        <div class="dashboard" id="meterstandenDashboard" style="margin-top:0;">
             <div class="card">
                 <div class="card-icon">🔌</div>
                 <div class="card-body">
@@ -869,27 +1022,6 @@
             &#9889; Bekijk Historische Data
         </a>
 
-        <!-- Locatieselector voor weersvoorspelling -->
-        <div class="location-selector" id="locationSelector">
-            <div class="location-selector-title">📍 Locatie weersvoorspelling</div>
-            <div class="location-search-row">
-                <input type="text" id="locationInput" placeholder="Zoek een stad of gemeente..." autocomplete="off">
-                <button onclick="searchLocation()">Zoeken</button>
-            </div>
-            <div id="locationResults" class="location-results"></div>
-            <div id="locationCurrent" class="location-current"></div>
-        </div>
-
-        <!-- IP-adres energiemeter -->
-        <div class="location-selector" id="ipSelector" style="margin-top:1rem;">
-            <div class="location-selector-title">🔌 IP-adres HomeWizard energiemeter</div>
-            <div class="location-search-row">
-                <input type="text" id="ipInput" placeholder="bv. 192.168.1.105" autocomplete="off" spellcheck="false">
-                <button onclick="saveIpAddress()">Opslaan</button>
-            </div>
-            <div id="ipCurrent" class="location-current"></div>
-        </div>
-
         <!-- Voetnoot versie-info -->
         <div class="app-footer">
             <span>⚡ Energie Monitor</span>
@@ -904,10 +1036,9 @@
     <script>
         // ── VERSIE & AUTO-UPDATE CHECK ───────────────────────
         // Dit versienummer moet worden aangepast bij elke nieuwe upload naar GitHub
-        const APP_VERSION = '8.8';
+        const APP_VERSION = '9.1';
         const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Bartstard/Energiemeter/main/index.html';
-        // Contents API: geeft altijd de actuele versie terug, nooit gecached
-        const GITHUB_API_URL = 'https://api.github.com/repos/Bartstard/Energiemeter/contents/index.html';
+        const GITHUB_API_URL = 'https://api.github.com/repos/Bartstard/Energiemeter/commits?path=index.html&per_page=1';
 
         let testMode = false;
         let testDataInterval;
@@ -916,16 +1047,76 @@
         function toggleTestMode() {
             testMode = !testMode;
             document.getElementById('testModeCheckbox').checked = testMode;
-            
             if (testMode) {
                 document.getElementById('testModeBadge').classList.add('active');
-                document.getElementById('testControls').classList.add('active');
-                fetchEnergyData(); // Update immediately with test data
+                document.getElementById('testControls').style.display = 'block';
+                fetchEnergyData();
             } else {
                 document.getElementById('testModeBadge').classList.remove('active');
-                document.getElementById('testControls').classList.remove('active');
-                fetchEnergyData(); // Switch back to real data
+                document.getElementById('testControls').style.display = 'none';
+                // Wis alle waarden zodat er geen verwarring is met testdata
+                const resetHtml = '<span class="card-value loading">---</span><span class="card-unit"></span>';
+                document.getElementById('power').innerHTML          = resetHtml;
+                document.getElementById('kwartier').innerHTML       = resetHtml;
+                document.getElementById('maandpiek').innerHTML      = resetHtml;
+                document.getElementById('import-kwh').innerHTML     = resetHtml;
+                document.getElementById('export-kwh').innerHTML     = resetHtml;
+                document.getElementById('netto-kwh').innerHTML      = resetHtml;
+                document.getElementById('myDiv').innerHTML          = '';
+                fetchEnergyData();
             }
+        }
+
+        // Toggle settings panel
+        function toggleSettings() {
+            const panel = document.getElementById('settingsPanel');
+            const cb    = document.getElementById('settingsCheckbox');
+            const open  = panel.classList.toggle('open');
+            cb.checked  = open;
+        }
+
+        // Toggle visibility of dashboard widgets
+        const WIDGET_MAP = {
+            pieken:       'piekenDashboard',
+            gauge:        'gaugeDashboard',
+            meterstanden: 'meterstandenDashboard',
+            solar:        'solarForecastCard',
+            weer:         'weatherForecastCard'
+        };
+        const WIDGET_PREFS_KEY = 'widgetPrefs';
+
+        function loadWidgetPrefs() {
+            try {
+                const raw = localStorage.getItem(WIDGET_PREFS_KEY);
+                return raw ? JSON.parse(raw) : {};
+            } catch(e) { return {}; }
+        }
+
+        function saveWidgetPrefs(prefs) {
+            try { localStorage.setItem(WIDGET_PREFS_KEY, JSON.stringify(prefs)); } catch(e) {}
+        }
+
+        function applyWidgetPrefs() {
+            const prefs = loadWidgetPrefs();
+            Object.entries(WIDGET_MAP).forEach(([key, elId]) => {
+                const visible = prefs[key] !== false; // default: true
+                document.getElementById(elId).style.display = visible ? '' : 'none';
+                const cb = document.getElementById('show' + key.charAt(0).toUpperCase() + key.slice(1));
+                if (cb) cb.checked = visible;
+            });
+        }
+
+        function toggleWidget(key) {
+            const elId   = WIDGET_MAP[key];
+            const cbId   = 'show' + key.charAt(0).toUpperCase() + key.slice(1);
+            const el     = document.getElementById(elId);
+            const cb     = document.getElementById(cbId);
+            const nowVisible = el.style.display === 'none';
+            el.style.display = nowVisible ? '' : 'none';
+            cb.checked = nowVisible;
+            const prefs  = loadWidgetPrefs();
+            prefs[key]   = nowVisible;
+            saveWidgetPrefs(prefs);
         }
 
         // Generate realistic test data
@@ -1618,13 +1809,11 @@
         function applyDarkMode() {
             if (darkMode) {
                 document.body.classList.add('dark');
-                document.getElementById('darkModeCheckbox').checked = true;
-                document.getElementById('darkModeLabel').textContent = '☀️ Licht';
             } else {
                 document.body.classList.remove('dark');
-                document.getElementById('darkModeCheckbox').checked = false;
-                document.getElementById('darkModeLabel').textContent = '🌙 Dark';
             }
+            const cb = document.getElementById('darkModeCheckbox');
+            if (cb) cb.checked = darkMode;
         }
 
         function toggleDarkMode() {
@@ -1790,67 +1979,58 @@
 
 
         // ── UPDATE CHECK ─────────────────────────────────────
-        // Download update als lokaal bestand via Blob
-        function downloadUpdate() {
-            if (!window._updateContent) return;
-            const blob = new Blob([window._updateContent], { type: 'text/html' });
-            const url  = URL.createObjectURL(blob);
-            const a    = document.createElement('a');
-            a.href     = url;
-            a.download = 'index.html';
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-        }
-
         async function checkForUpdate() {
-            const remoteEl  = document.getElementById('footerRemoteVersion');
-            const statusEl  = document.getElementById('footerUpdateStatus');
-
-            function setError(msg) {
-                if (remoteEl) remoteEl.textContent = '—';
-                if (statusEl) { statusEl.textContent = msg; statusEl.className = ''; }
-            }
-
             try {
-                // Stap 1: haal de laatste commit SHA op
-                const commitsResp = await fetch(
-                    'https://api.github.com/repos/Bartstard/Energiemeter/commits?path=index.html&per_page=1',
-                    { headers: { 'Accept': 'application/vnd.github.v3+json' }, cache: 'no-store' }
-                );
-                if (!commitsResp.ok) { setError(`— GitHub API fout (${commitsResp.status})`); return; }
-                const commits = await commitsResp.json();
-                if (!commits.length) { setError('— Geen commits gevonden'); return; }
+                // Haal de laatste commit op via GitHub API
+                const resp = await fetch(GITHUB_API_URL, {
+                    headers: { 'Accept': 'application/vnd.github.v3+json' },
+                    cache: 'no-cache'
+                });
+                if (!resp.ok) return;
+                const commits = await resp.json();
+                if (!commits.length) return;
 
-                // Stap 2: haal bestandsinhoud op via contents API (geeft base64 terug)
-                const contentsResp = await fetch(
-                    `https://api.github.com/repos/Bartstard/Energiemeter/contents/index.html?ref=${commits[0].sha}`,
-                    { headers: { 'Accept': 'application/vnd.github.v3+json' }, cache: 'no-store' }
-                );
-                if (!contentsResp.ok) { setError(`— Inhoud niet bereikbaar (${contentsResp.status})`); return; }
-                const contentsJson = await contentsResp.json();
-                const rawText = atob(contentsJson.content.replace(/\s/g, ''));
+                const latestSha = commits[0].sha;
+                const latestDate = new Date(commits[0].commit.author.date);
 
-                // Zoek versienummer
-                const match = rawText.match(/APP_VERSION\s*=\s*['"]?([\d.]+)['"]?/);
-                if (!match) { setError('— Versie niet gevonden'); return; }
-                const remoteVersion = match[1];
+                // Haal de versie op uit het raw bestand op GitHub
+                const rawResp = await fetch(GITHUB_RAW_URL + '?t=' + Date.now(), { cache: 'no-cache' });
+                if (!rawResp.ok) return;
+                const rawText = await rawResp.text();
 
+                // Zoek het versienummer in het GitHub-bestand
+                const versionMatch = rawText.match(/const APP_VERSION = '([^']+)'/);
+                if (!versionMatch) return;
+                const remoteVersion = versionMatch[1];
+
+                // Update footer met remote versie
+                const remoteEl = document.getElementById('footerRemoteVersion');
                 if (remoteEl) remoteEl.textContent = `v${remoteVersion}`;
 
-                if (remoteVersion !== String(APP_VERSION)) {
-                    // Sla de gedownloade inhoud op zodat de knop die lokaal kan aanbieden
-                    window._updateContent = rawText;
-                    document.getElementById('updateBtnLabel').textContent = `Nieuwe versie beschikbaar (v${remoteVersion})`;
-                    document.getElementById('updateBtn').style.display = 'flex';
-                    if (statusEl) { statusEl.textContent = '⬆ Update beschikbaar'; statusEl.className = 'update-available'; }
+                const statusEl = document.getElementById('footerUpdateStatus');
+                if (remoteVersion !== APP_VERSION) {
+                    // Nieuwere versie beschikbaar — toon de knop
+                    const btn = document.getElementById('updateBtn');
+                    btn.href = GITHUB_RAW_URL;
+                    btn.download = 'index.html';
+                    document.getElementById('updateBtnLabel').textContent =
+                        `Nieuwe versie beschikbaar (v${remoteVersion})`;
+                    btn.style.display = 'flex';
+                    if (statusEl) {
+                        statusEl.textContent = '⬆ Update beschikbaar';
+                        statusEl.className = 'update-available';
+                    }
+                    console.log(`Update beschikbaar: ${APP_VERSION} → ${remoteVersion}`);
                 } else {
-                    if (statusEl) { statusEl.textContent = '✓ Up-to-date'; statusEl.className = 'up-to-date'; }
+                    if (statusEl) {
+                        statusEl.textContent = '✓ Up-to-date';
+                        statusEl.className = 'up-to-date';
+                    }
                 }
-
             } catch(e) {
-                console.warn('Update check fout:', e);
-                setError('— Geen verbinding met GitHub');
+                console.warn('Update check mislukt:', e);
+                const statusEl = document.getElementById('footerUpdateStatus');
+                if (statusEl) { statusEl.textContent = '— Geen verbinding met GitHub'; statusEl.className = ''; }
             }
         }
 
@@ -1859,8 +2039,9 @@
         setInterval(checkForUpdate, 6 * 3600 * 1000);
 
         // Toon lokale versie in voetnoot
-        document.getElementById('footerLocalVersion').textContent = `v${String(APP_VERSION)}`;
+        document.getElementById('footerLocalVersion').textContent = `v${APP_VERSION}`;
 
+        applyWidgetPrefs();
         startTime();
         fetchEnergyData();
         setInterval(fetchEnergyData, 1000);
