@@ -904,7 +904,7 @@
     <script>
         // ── VERSIE & AUTO-UPDATE CHECK ───────────────────────
         // Dit versienummer moet worden aangepast bij elke nieuwe upload naar GitHub
-        const APP_VERSION = '8.2';
+        const APP_VERSION = '8.3';
         const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Bartstard/Energiemeter/main/index.html';
         const GITHUB_API_URL = 'https://api.github.com/repos/Bartstard/Energiemeter/commits?path=index.html&per_page=1';
 
@@ -1809,16 +1809,17 @@
                 const rawText = await rawResp.text();
 
                 // Zoek het versienummer in het GitHub-bestand
-                const versionMatch = rawText.match(/const APP_VERSION = '([^']+)'/);
+                // Zoek versienummer met of zonder aanhalingstekens
+                const versionMatch = rawText.match(/const APP_VERSION = ['"]?([\d.]+)['"]?/);
                 if (!versionMatch) return;
-                const remoteVersion = versionMatch[1];
+                const remoteVersion = versionMatch[1].trim();
 
                 // Update footer met remote versie
                 const remoteEl = document.getElementById('footerRemoteVersion');
                 if (remoteEl) remoteEl.textContent = `v${remoteVersion}`;
 
                 const statusEl = document.getElementById('footerUpdateStatus');
-                if (remoteVersion !== APP_VERSION) {
+                if (remoteVersion !== String(APP_VERSION)) {
                     // Nieuwere versie beschikbaar — toon de knop
                     const btn = document.getElementById('updateBtn');
                     btn.href = GITHUB_RAW_URL;
@@ -1840,8 +1841,7 @@
             } catch(e) {
                 console.warn('Update check mislukt:', e);
                 const statusEl = document.getElementById('footerUpdateStatus');
-                document.getElementById('footerRemoteVersion').textContent = 'niet bereikbaar';
-                if (statusEl) { statusEl.textContent = ''; statusEl.className = ''; }
+                if (statusEl) { statusEl.textContent = '— Geen verbinding met GitHub'; statusEl.className = ''; }
             }
         }
 
@@ -1850,10 +1850,7 @@
         setInterval(checkForUpdate, 6 * 3600 * 1000);
 
         // Toon lokale versie in voetnoot
-        document.getElementById('footerLocalVersion').textContent = `v${APP_VERSION}`;
-        document.getElementById('footerRemoteVersion').textContent = 'laden...';
-        const statusElInit = document.getElementById('footerUpdateStatus');
-        if (statusElInit) { statusElInit.textContent = ''; statusElInit.className = ''; }
+        document.getElementById('footerLocalVersion').textContent = `v${String(APP_VERSION)}`;
 
         startTime();
         fetchEnergyData();
