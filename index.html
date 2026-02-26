@@ -904,7 +904,7 @@
     <script>
         // ── VERSIE & AUTO-UPDATE CHECK ───────────────────────
         // Dit versienummer moet worden aangepast bij elke nieuwe upload naar GitHub
-        const APP_VERSION = '8.4';
+        const APP_VERSION = '8.5';
         const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Bartstard/Energiemeter/main/index.html';
         // Contents API: geeft altijd de actuele versie terug, nooit gecached
         const GITHUB_API_URL = 'https://api.github.com/repos/Bartstard/Energiemeter/contents/index.html';
@@ -1805,11 +1805,8 @@
                 if (!resp.ok) return;
                 const meta = await resp.json();
 
-                // Decodeer base64 inhoud
-                const rawText = decodeURIComponent(
-                    atob(meta.content.replace(/\n/g, ''))
-                        .split('').map(c => '%' + c.charCodeAt(0).toString(16).padStart(2,'0')).join('')
-                );
+                // Decodeer base64 inhoud (simpele methode, werkt voor ASCII versienummer)
+                const rawText = atob(meta.content.replace(/\s/g, ''));
 
                 // Zoek versienummer met of zonder aanhalingstekens
                 const versionMatch = rawText.match(/const APP_VERSION = ['"]?([\d.]+)['"]?/);
