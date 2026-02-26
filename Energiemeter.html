@@ -1037,8 +1037,8 @@
         // ── VERSIE & AUTO-UPDATE CHECK ───────────────────────
         // Dit versienummer moet worden aangepast bij elke nieuwe upload naar GitHub
         const APP_VERSION = '9.1';
-        const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Bartstard/Energiemeter/main/index.html';
-        const GITHUB_API_URL = 'https://api.github.com/repos/Bartstard/Energiemeter/commits?path=index.html&per_page=1';
+        const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Bartstard/Energiemeter/main/Energiemeter.html';
+        const GITHUB_API_URL = 'https://api.github.com/repos/Bartstard/Energiemeter/commits?path=Energiemeter.html&per_page=1';
 
         let testMode = false;
         let testDataInterval;
@@ -2012,7 +2012,7 @@
                     // Nieuwere versie beschikbaar — toon de knop
                     const btn = document.getElementById('updateBtn');
                     btn.href = GITHUB_RAW_URL;
-                    btn.download = 'index.html';
+                    btn.download = 'Energiemeter.html';
                     document.getElementById('updateBtnLabel').textContent =
                         `Nieuwe versie beschikbaar (v${remoteVersion})`;
                     btn.style.display = 'flex';
