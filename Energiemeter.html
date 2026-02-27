@@ -829,6 +829,42 @@
         .app-footer strong { color: #ffffff !important; }
         .footer-divider { opacity: 0.5; }
 
+
+        /* ── KO-FI SUPPORT LINK ─────────────────────────────── */
+        .kofi-bar {
+            text-align: center;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .kofi-link {
+            display: inline-block;
+            padding: 0.5rem 1.25rem;
+            background: rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.7);
+            border-radius: 50px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+        .kofi-link:hover {
+            background: rgba(255,255,255,0.28);
+            color: rgba(255,255,255,0.95);
+            border-color: rgba(255,255,255,0.4);
+            transform: translateY(-1px);
+        }
+        body.dark .kofi-link {
+            background: rgba(255,255,255,0.07);
+            color: rgba(255,255,255,0.45);
+            border-color: rgba(255,255,255,0.12);
+        }
+        body.dark .kofi-link:hover {
+            background: rgba(255,255,255,0.14);
+            color: rgba(255,255,255,0.8);
+        }
+
     </style>
 </head>
 <body>
@@ -901,6 +937,10 @@
                 <div class="settings-row">
                     <span class="settings-row-label">🌤️ Weersvoorspelling</span>
                     <div class="settings-toggle" onclick="toggleWidget('weer')"><input type="checkbox" id="showWeer" checked><span class="settings-toggle-track"></span></div>
+                </div>
+                <div class="settings-row">
+                    <span class="settings-row-label">🍺 Traktatie-link weergeven</span>
+                    <div class="settings-toggle" onclick="toggleKofi()"><input type="checkbox" id="showKofi" checked><span class="settings-toggle-track"></span></div>
                 </div>
             </div>
 
@@ -1022,6 +1062,13 @@
             &#9889; Bekijk Historische Data
         </a>
 
+        <!-- Ko-fi support link -->
+        <div id="kofiBar" class="kofi-bar">
+            <a href="https://ko-fi.com/energiemeter" target="_blank" class="kofi-link">
+                🍺 Trakteer de maker op een fris pitje
+            </a>
+        </div>
+
         <!-- Voetnoot versie-info -->
         <div class="app-footer">
             <span>⚡ Energie Monitor</span>
@@ -1036,9 +1083,9 @@
     <script>
         // ── VERSIE & AUTO-UPDATE CHECK ───────────────────────
         // Dit versienummer moet worden aangepast bij elke nieuwe upload naar GitHub
-        const APP_VERSION = '9.1';
-        const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Bartstard/Energiemeter/main/Energiemeter.html';
-        const GITHUB_API_URL = 'https://api.github.com/repos/Bartstard/Energiemeter/commits?path=Energiemeter.html&per_page=1';
+        const APP_VERSION = '9.3';
+        const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/Bartstard/Energiemeter/main/index.html';
+        const GITHUB_API_URL = 'https://api.github.com/repos/Bartstard/Energiemeter/commits?path=index.html&per_page=1';
 
         let testMode = false;
         let testDataInterval;
@@ -2012,7 +2059,7 @@
                     // Nieuwere versie beschikbaar — toon de knop
                     const btn = document.getElementById('updateBtn');
                     btn.href = GITHUB_RAW_URL;
-                    btn.download = 'Energiemeter.html';
+                    btn.download = 'index.html';
                     document.getElementById('updateBtnLabel').textContent =
                         `Nieuwe versie beschikbaar (v${remoteVersion})`;
                     btn.style.display = 'flex';
@@ -2041,6 +2088,47 @@
         // Toon lokale versie in voetnoot
         document.getElementById('footerLocalVersion').textContent = `v${APP_VERSION}`;
 
+
+        // ── KO-FI TRAKTATIE LINK ─────────────────────────────
+        const KOFI_HIDDEN_KEY  = 'kofiHiddenUntil';
+        const SIX_MONTHS_MS    = 6 * 30 * 24 * 3600 * 1000;
+
+        function applyKofiVisibility() {
+            const bar = document.getElementById('kofiBar');
+            const cb  = document.getElementById('showKofi');
+            if (!bar) return;
+            try {
+                const hiddenUntil = parseInt(localStorage.getItem(KOFI_HIDDEN_KEY) || '0');
+                if (hiddenUntil && Date.now() < hiddenUntil) {
+                    // Nog binnen de 6-maanden onderdrukkingsperiode
+                    bar.style.display = 'none';
+                    if (cb) cb.checked = false;
+                    return;
+                }
+            } catch(e) {}
+            // Standaard zichtbaar
+            bar.style.display = '';
+            if (cb) cb.checked = true;
+        }
+
+        function toggleKofi() {
+            const bar = document.getElementById('kofiBar');
+            const cb  = document.getElementById('showKofi');
+            const nowHidden = bar.style.display !== 'none';
+            if (nowHidden) {
+                // Verbergen — sla timestamp op voor 6 maanden
+                bar.style.display = 'none';
+                if (cb) cb.checked = false;
+                try { localStorage.setItem(KOFI_HIDDEN_KEY, Date.now() + SIX_MONTHS_MS); } catch(e) {}
+            } else {
+                // Terug zichtbaar — verwijder onderdrukkingstimestamp
+                bar.style.display = '';
+                if (cb) cb.checked = true;
+                try { localStorage.removeItem(KOFI_HIDDEN_KEY); } catch(e) {}
+            }
+        }
+
+        applyKofiVisibility();
         applyWidgetPrefs();
         startTime();
         fetchEnergyData();
