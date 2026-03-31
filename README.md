@@ -25,7 +25,7 @@ Een lokale webpagina die realtime energieverbruik visualiseert via de **HomeWiza
 
 1. Download `Energiemeter.html` uit deze repository
 2. Open het bestand in een webbrowser op een apparaat dat verbonden is met je lokale netwerk
-3. Scroll naar beneden op de pagina
+3. Open de instellingen op de webpagina
 4. Vul bij **"🔌 IP-adres HomeWizard energiemeter"** het IP-adres van jouw P1 meter in
 5. Klik op **Opslaan** — de pagina herverbindt meteen met de meter
 
